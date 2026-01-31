@@ -86,3 +86,36 @@ export const emitTicketUpdate = (ticket) => {
     console.log(`📤 Emitted ticket update to kitchen: ${ticket.id} → ${ticket.status}`);
   }
 };
+
+// Emit new items to kitchen (item-level)
+export const emitNewKitchenItems = (items) => {
+  if (io) {
+    io.to('kitchen').emit('kitchen:item:new', {
+      type: 'new_items',
+      items,
+    });
+    console.log(`📤 Emitted ${items.length} new item(s) to kitchen`);
+  }
+};
+
+// Emit item status update (item-level)
+export const emitItemStatusUpdate = (item) => {
+  if (io) {
+    io.to('kitchen').emit('kitchen:item:update', {
+      type: 'item_status_change',
+      item,
+    });
+    console.log(`📤 Emitted item status update: Item ${item.id} → ${item.kitchenStatus}`);
+  }
+};
+
+// Emit order readiness update
+export const emitOrderReadyUpdate = (order) => {
+  if (io) {
+    io.to('kitchen').emit('kitchen:order:update', {
+      type: 'order_ready',
+      order,
+    });
+    console.log(`📤 Emitted order ready update: Order ${order.orderId}`);
+  }
+};

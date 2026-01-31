@@ -1,6 +1,6 @@
 import prisma from '../prisma/client.js';
 import { kitchenService } from './kitchen.service.js';
-import { emitNewOrder } from '../socket/kitchen.socket.js';
+import { emitNewOrder, emitNewKitchenItems } from '../socket/kitchen.socket.js';
 
 // Valid order states
 const ORDER_STATUS = {
@@ -205,8 +205,50 @@ export const orderService = {
       },
       data: {
         sentToKitchen: true,
+        kitchenStatus: 'PENDING',
+        sentToKitchenAt: new Date(),
       },
     });
+
+    // Get updated order lines with product info for socket emission
+    const updatedLines = await prisma.orderLine.findMany({
+      where: {
+        orderId,
+        id: { in: unsentLines.map(l => l.id) },
+      },
+      include: {
+        order: {
+          include: {
+            table: { include: { floor: true } },
+          },
+        },
+      },
+    });
+
+    // Get product stations
+    const productIds = updatedLines.map(l => l.productId);
+    const products = await prisma.product.findMany({
+      where: { id: { in: productIds } },
+      select: { id: true, kitchenStation: true },
+    });
+    const productMap = new Map(products.map(p => [p.id, p.kitchenStation || 'GENERAL']));
+
+    // Emit new items to kitchen via WebSocket
+    const itemsToEmit = updatedLines.map(line => ({
+      orderId: line.orderId,
+      orderNumber: line.orderId.slice(-8).toUpperCase(),
+      tableNumber: line.order.table.number,
+      floorName: line.order.table.floor.name,
+      itemId: line.id,
+      productId: line.productId,
+      productName: line.name,
+      quantity: line.qty,
+      kitchenStatus: line.kitchenStatus,
+      kitchenStation: productMap.get(line.productId) || 'GENERAL',
+      sentToKitchenAt: line.sentToKitchenAt,
+    }));
+
+    emitNewKitchenItems(itemsToEmit);
 
     // Update order status to sent_to_kitchen if it was draft
     let updatedOrder;

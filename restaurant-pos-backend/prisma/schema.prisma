@@ -37,6 +37,7 @@ model Product {
   taxPercent    Float
   isActive      Boolean  @default(true)
   sendToKitchen Boolean  @default(true)
+  kitchenStation String  @default("GENERAL") // GRILL | FRY | DRINKS | DESSERT | GENERAL
   categoryId    String
   category      ProductCategory @relation(fields: [categoryId], references: [id])
 
@@ -99,16 +100,19 @@ model Order {
 }
 
 model OrderLine {
-  id            Int      @id @default(autoincrement())
-  orderId       String
-  productId     String
-  name          String
-  price         Float
-  qty           Int
-  taxAmount     Float    @default(0)
-  sentToKitchen Boolean  @default(false)
-  createdAt     DateTime @default(now())
-  order         Order    @relation(fields: [orderId], references: [id])
+  id                Int       @id @default(autoincrement())
+  orderId           String
+  productId         String
+  name              String
+  price             Float
+  qty               Int
+  taxAmount         Float     @default(0)
+  sentToKitchen     Boolean   @default(false)
+  kitchenStatus     String?   // PENDING | PREPARING | READY
+  sentToKitchenAt   DateTime?
+  preparedAt        DateTime?
+  createdAt         DateTime  @default(now())
+  order             Order     @relation(fields: [orderId], references: [id])
 }
 
 model Payment {

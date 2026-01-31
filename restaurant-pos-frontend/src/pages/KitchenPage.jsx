@@ -1,11 +1,13 @@
 import React from 'react';
 import { useAuthStore } from '../store/auth.store';
+import KitchenDashboard from '../kitchen/KitchenDashboard';
 
 export default function KitchenPage() {
   const { user, logout } = useAuthStore();
 
   return (
     <div className="min-h-screen bg-neutral-50">
+      {/* Header with Logout */}
       <header className="bg-white border-b border-neutral-200">
         <div className="container mx-auto px-4">
           <div className="h-16 flex items-center justify-between">
@@ -22,12 +24,9 @@ export default function KitchenPage() {
           </div>
         </div>
       </header>
-      <main className="container mx-auto px-4 py-8">
-        <div className="bg-white rounded-lg border border-neutral-200 p-8">
-          <h2 className="text-2xl font-semibold text-neutral-900 mb-4">Kitchen Orders</h2>
-          <p className="text-neutral-600">This is the kitchen display system.</p>
-        </div>
-      </main>
+      
+      {/* Kitchen Dashboard */}
+      <KitchenDashboard />
     </div>
   );
 }
