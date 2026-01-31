@@ -1,0 +1,170 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id          String        @id @default(uuid())
+  email       String        @unique
+  password    String
+  role        String        @default("cashier")
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  orders      Order[]
+  posSessions POS_Session[]
+}
+
+model ProductCategory {
+  id       String    @id @default(uuid())
+  name     String    @unique
+  sequence Int
+  active   Boolean   @default(true)
+  products Product[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Product {
+  id            String   @id @default(uuid())
+  name          String
+  description   String?
+  price         Float
+  taxPercent    Float
+  isActive      Boolean  @default(true)
+  sendToKitchen Boolean  @default(true)
+  categoryId    String
+  category      ProductCategory @relation(fields: [categoryId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Floor {
+  id       String  @id @default(uuid())
+  name     String
+  sequence Int
+  active   Boolean @default(true)
+  tables   Table[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Table {
+  id      String  @id @default(uuid())
+  number  Int
+  seats   Int
+  active  Boolean @default(true)
+  floorId String
+  floor   Floor   @relation(fields: [floorId], references: [id])
+  orders  Order[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([floorId, number])
+}
+
+model POS_Session {
+  id           String    @id @default(uuid())
+  openedAt     DateTime  @default(now())
+  closedAt     DateTime?
+  status       String    @default("open")
+  openedBy     String
+  closingTotal Float?
+  user         User      @relation(fields: [openedBy], references: [id])
+  orders       Order[]
+}
+
+model Order {
+  id            String         @id @default(uuid())
+  sessionId     String
+  userId        String
+  tableId       String
+  status        String         @default("draft")
+  total         Float          @default(0)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  session       POS_Session    @relation(fields: [sessionId], references: [id])
+  user          User           @relation(fields: [userId], references: [id])
+  table         Table          @relation(fields: [tableId], references: [id])
+  orderLines    OrderLine[]
+  payment       Payment?
+  kitchenTicket KitchenTicket?
+}
+
+model OrderLine {
+  id            Int      @id @default(autoincrement())
+  orderId       String
+  productId     String
+  name          String
+  price         Float
+  qty           Int
+  taxAmount     Float    @default(0)
+  sentToKitchen Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  order         Order    @relation(fields: [orderId], references: [id])
+}
+
+model Payment {
+  id        Int      @id @default(autoincrement())
+  orderId   String   @unique
+  amount    Float
+  method    String
+  createdAt DateTime @default(now())
+  order     Order    @relation(fields: [orderId], references: [id])
+}
+
+model KitchenTicket {
+  id        String   @id @default(uuid())
+  orderId   String   @unique
+  status    String   @default("to_cook")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  order     Order    @relation(fields: [orderId], references: [id])
+}
+
+model PosConfig {
+  id                    String   @id @default(uuid())
+  posName               String   @default("Adani POS")
+  defaultTax            Float    @default(5.0)
+  enableKitchenDisplay  Boolean  @default(true)
+  enableCustomerDisplay Boolean  @default(false)
+  enableCash            Boolean  @default(true)
+  enableDigital         Boolean  @default(true)
+  enableUpi             Boolean  @default(false)
+  upiId                 String?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+}
+
+model ReceiptSettings {
+  id                String   @id @default(uuid())
+  
+  restaurantName    String   @default("Adani Restaurant")
+  address           String   @default("")
+  phone             String?
+  gstNumber         String?
+  
+  logoUrl           String?
+  
+  showOrderNumber   Boolean  @default(true)
+  showCashier       Boolean  @default(true)
+  showPaymentMethod Boolean  @default(true)
+  showItemTax       Boolean  @default(true)
+  showTotalTax      Boolean  @default(true)
+  showQrCode        Boolean  @default(false)
+  
+  paperWidth        String   @default("80mm")
+  fontScale         String   @default("normal")
+  
+  footerText        String?
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
