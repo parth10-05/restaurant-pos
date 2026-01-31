@@ -21,6 +21,9 @@ router.get('/:id', orderController.getOrder);
 // Add line item to order
 router.post('/:id/lines', orderController.addOrderLine);
 
+// Update line item quantity
+router.patch('/:id/lines/:lineId', orderController.updateOrderLineQuantity);
+
 // Send order to kitchen
 router.patch('/:id/send', orderController.sendToKitchen);
 

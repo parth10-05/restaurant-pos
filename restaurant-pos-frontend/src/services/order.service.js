@@ -47,6 +47,25 @@ export const addOrderLine = async (orderId, productId, qty) => {
 };
 
 /**
+ * Update quantity of an order line item
+ */
+export const updateOrderLineQuantity = async (orderId, lineId, qty) => {
+  try {
+    const response = await api.patch(`/orders/${orderId}/lines/${lineId}`, { qty });
+    return {
+      success: true,
+      data: response.data.data,
+    };
+  } catch (error) {
+    console.error('Error updating order line quantity:', error);
+    return {
+      success: false,
+      error: error.response?.data?.message || 'Failed to update item quantity',
+    };
+  }
+};
+
+/**
  * Get all orders for the current session
  * Requires an open session
  */
@@ -164,6 +183,7 @@ export const payOrder = async (orderId, method) => {
 export const orderService = {
   createOrder,
   addOrderLine,
+  updateOrderLineQuantity,
   getSessionOrders,
   getOrderById,
   sendToKitchen,

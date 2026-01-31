@@ -63,44 +63,48 @@ export default function OrderCard({ order, onItemStatusChange, updatingItems }) 
 
   return (
     <div
-      className={`bg-white rounded-lg border-2 shadow-sm overflow-hidden transition-all ${getBorderClass()}`}
+      className={`bg-white rounded-xl border-2 shadow-lg overflow-hidden transition-all ${getBorderClass()}`}
     >
       {/* Order Header */}
       <div
-        className={`px-6 py-4 border-b-2 ${
+        className={`px-6 py-5 border-b-2 ${
           order.isReadyToServe
             ? 'bg-green-50 border-green-200'
             : 'bg-neutral-50 border-neutral-200'
         }`}
       >
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-5">
             <div className="flex flex-col">
-              <span className="text-sm text-neutral-600 font-medium">
+              <span className="text-xs font-semibold text-neutral-500 uppercase tracking-wide">
                 Table
               </span>
-              <span className="text-3xl font-bold text-neutral-900">
+              <span className="text-4xl font-bold text-neutral-900 leading-none mt-1">
                 {order.tableNumber}
               </span>
             </div>
             
-            <div className="h-12 w-px bg-neutral-300"></div>
+            <div className="h-14 w-px bg-neutral-300"></div>
             
             <div className="flex flex-col">
-              <span className="text-sm text-neutral-600 font-medium">
+              <span className="text-xs font-semibold text-neutral-500 uppercase tracking-wide">
                 Order
               </span>
-              <span className="text-lg font-semibold text-neutral-700">
+              <span className="text-xl font-bold text-neutral-800 mt-1">
                 #{order.orderNumber}
               </span>
             </div>
           </div>
 
           <div className="flex flex-col items-end">
-            <span className="text-sm text-neutral-600 font-medium">
+            <span className="text-xs font-semibold text-neutral-500 uppercase tracking-wide">
               Time
             </span>
-            <span className="text-lg font-semibold text-neutral-900">
+            <span className={`text-xl font-bold mt-1 ${
+              orderUrgency === 'CRITICAL' ? 'text-red-600' :
+              orderUrgency === 'WARNING' ? 'text-amber-600' :
+              'text-neutral-900'
+            }`}>
               {getTimeSince()}
             </span>
           </div>
@@ -108,9 +112,9 @@ export default function OrderCard({ order, onItemStatusChange, updatingItems }) 
 
         {/* Ready to Serve Indicator */}
         {order.isReadyToServe && (
-          <div className="mt-3 flex items-center justify-center">
-            <div className="bg-green-600 text-white px-6 py-2 rounded-full font-bold text-sm uppercase tracking-wide shadow-md">
-              ✓ Ready to Serve
+          <div className="mt-4 flex items-center justify-center">
+            <div className="bg-green-600 text-white px-8 py-2.5 rounded-full font-bold text-sm uppercase tracking-wider shadow-md">
+              Ready to Serve
             </div>
           </div>
         )}

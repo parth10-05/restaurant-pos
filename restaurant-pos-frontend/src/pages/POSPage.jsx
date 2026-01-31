@@ -31,9 +31,9 @@ export default function POSPage() {
   }, []);
 
   const tabs = [
-    { id: 'create-order', label: 'Create Order', icon: '🛒' },
-    { id: 'payment', label: 'Payment', icon: '💰' },
-    { id: 'receipts', label: 'Receipt History', icon: '📄' },
+    { id: 'order', label: 'Create Order' },
+    { id: 'payment', label: 'Payment' },
+    { id: 'receipts', label: 'Receipts' },
   ];
 
   const renderTabContent = () => {
@@ -51,37 +51,37 @@ export default function POSPage() {
 
   return (
     <div className="min-h-screen bg-neutral-50">
-      <header className="bg-white border-b border-neutral-200 shadow-sm">
+      <header className="bg-white border-b-2 border-neutral-200 shadow-sm">
         <div className="container mx-auto px-4">
           <div className="h-16 flex items-center justify-between">
             <div>
-              <h1 className="text-xl font-semibold text-neutral-900">Point of Sale</h1>
-              <p className="text-xs text-neutral-500">Cashier Terminal</p>
+              <h1 className="text-xl font-bold text-neutral-900 uppercase tracking-wide">Point of Sale</h1>
+              <p className="text-xs text-neutral-500 font-medium">Cashier Terminal</p>
             </div>
             <div className="flex items-center gap-4">
               {/* Session Status Indicator */}
               {!loadingSession && (
                 <div className="flex items-center gap-2">
                   {currentSession ? (
-                    <div className="flex items-center gap-2 px-3 py-1.5 bg-green-50 border border-green-200 rounded-md">
-                      <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                      <span className="text-xs font-medium text-green-700">Session Open</span>
+                    <div className="flex items-center gap-2 px-4 py-2 bg-green-50 border-2 border-green-200 rounded-lg">
+                      <div className="w-2 h-2 bg-green-600 rounded-full animate-pulse"></div>
+                      <span className="text-xs font-bold text-green-900 uppercase tracking-wide">Session Open</span>
                     </div>
                   ) : (
-                    <div className="flex items-center gap-2 px-3 py-1.5 bg-red-50 border border-red-200 rounded-md">
-                      <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-                      <span className="text-xs font-medium text-red-700">No Session</span>
+                    <div className="flex items-center gap-2 px-4 py-2 bg-red-50 border-2 border-red-200 rounded-lg">
+                      <div className="w-2 h-2 bg-red-600 rounded-full"></div>
+                      <span className="text-xs font-bold text-red-900 uppercase tracking-wide">No Session</span>
                     </div>
                   )}
                 </div>
               )}
               <div className="text-right">
-                <div className="text-sm font-medium text-neutral-900">{user?.name || user?.email}</div>
-                <div className="text-xs text-neutral-500 capitalize">{user?.role}</div>
+                <div className="text-sm font-semibold text-neutral-900">{user?.name || user?.email}</div>
+                <div className="text-xs text-neutral-500 font-medium uppercase tracking-wide">{user?.role}</div>
               </div>
               <button
                 onClick={logout}
-                className="px-4 py-2 text-sm font-medium text-neutral-700 hover:text-neutral-900 border border-neutral-300 rounded-md hover:bg-neutral-50 transition-colors"
+                className="px-4 py-2 text-sm font-bold text-neutral-700 hover:text-neutral-900 border-2 border-neutral-300 rounded-lg hover:bg-neutral-50 transition-all"
               >
                 Logout
               </button>
@@ -109,19 +109,18 @@ export default function POSPage() {
         )}
 
         {/* Tab Navigation */}
-        <div className="bg-white rounded-lg shadow-sm border border-neutral-200 mb-6">
+        <div className="bg-white rounded-xl shadow-sm border-2 border-neutral-200 mb-6">
           <div className="flex border-b border-neutral-200">
             {tabs.map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex-1 px-6 py-4 text-sm font-medium transition-colors ${
+                className={`flex-1 px-6 py-4 text-sm font-bold uppercase tracking-wide transition-all ${
                   activeTab === tab.id
                     ? 'text-neutral-900 border-b-2 border-neutral-900 bg-neutral-50'
                     : 'text-neutral-600 hover:text-neutral-900 hover:bg-neutral-50'
                 }`}
               >
-                <span className="mr-2">{tab.icon}</span>
                 {tab.label}
               </button>
             ))}
@@ -129,7 +128,7 @@ export default function POSPage() {
         </div>
 
         {/* Tab Content */}
-        <div className="bg-white rounded-lg shadow-sm border border-neutral-200 p-6">
+        <div className="bg-white rounded-xl shadow-sm border-2 border-neutral-200 p-6">
           {renderTabContent()}
         </div>
       </main>

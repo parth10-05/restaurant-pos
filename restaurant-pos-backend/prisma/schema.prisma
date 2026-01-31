@@ -7,6 +7,14 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum KitchenStation {
+  GRILL
+  FRYER
+  DRINKS
+  DESSERT
+  GENERAL
+}
+
 model User {
   id          String        @id @default(uuid())
   email       String        @unique
@@ -37,7 +45,7 @@ model Product {
   taxPercent    Float
   isActive      Boolean  @default(true)
   sendToKitchen Boolean  @default(true)
-  kitchenStation String  @default("GENERAL") // GRILL | FRY | DRINKS | DESSERT | GENERAL
+  kitchenStation KitchenStation @default(GENERAL)
   categoryId    String
   category      ProductCategory @relation(fields: [categoryId], references: [id])
 
@@ -107,6 +115,7 @@ model OrderLine {
   price             Float
   qty               Int
   taxAmount         Float     @default(0)
+  kitchenStation    KitchenStation @default(GENERAL)
   sentToKitchen     Boolean   @default(false)
   kitchenStatus     String?   // PENDING | PREPARING | READY
   sentToKitchenAt   DateTime?

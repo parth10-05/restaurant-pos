@@ -141,6 +141,7 @@ export const orderService = {
           name: product.name,
           price: product.price,
           qty,
+          kitchenStation: product.kitchenStation,
           sentToKitchen: false,
         },
       });
@@ -161,6 +162,87 @@ export const orderService = {
       data: { total: newTotal },
       include: {
         table: true,
+        orderLines: true,
+        user: {
+          select: {
+            id: true,
+            email: true,
+            role: true,
+          },
+        },
+      },
+    });
+
+    return updatedOrder;
+  },
+
+  async updateOrderLineQuantity({ orderId, lineId, qty }) {
+    // Get order line
+    const orderLine = await prisma.orderLine.findUnique({
+      where: { id: lineId },
+      include: {
+        order: true,
+      },
+    });
+
+    if (!orderLine) {
+      const error = new Error('Order line not found');
+      error.statusCode = 404;
+      throw error;
+    }
+
+    if (orderLine.orderId !== orderId) {
+      const error = new Error('Order line does not belong to this order');
+      error.statusCode = 400;
+      throw error;
+    }
+
+    // Cannot modify items already sent to kitchen
+    if (orderLine.sentToKitchen) {
+      const error = new Error('Cannot modify items already sent to kitchen');
+      error.statusCode = 400;
+      throw error;
+    }
+
+    // Validate quantity
+    if (qty < 0) {
+      const error = new Error('Quantity cannot be negative');
+      error.statusCode = 400;
+      throw error;
+    }
+
+    // If quantity is 0, delete the line
+    if (qty === 0) {
+      await prisma.orderLine.delete({
+        where: { id: lineId },
+      });
+    } else {
+      // Update quantity
+      await prisma.orderLine.update({
+        where: { id: lineId },
+        data: { qty },
+      });
+    }
+
+    // Recalculate order total
+    const allLines = await prisma.orderLine.findMany({
+      where: { orderId },
+    });
+
+    const newTotal = allLines.reduce((sum, line) => {
+      return sum + line.price * line.qty;
+    }, 0);
+
+    // Update order total and return full order
+    const updatedOrder = await prisma.order.update({
+      where: { id: orderId },
+      data: { total: newTotal },
+      include: {
+        table: {
+          include: {
+            floor: true,
+          },
+        },
         orderLines: true,
         user: {
           select: {
@@ -225,14 +307,6 @@ export const orderService = {
       },
     });
 
-    // Get product stations
-    const productIds = updatedLines.map(l => l.productId);
-    const products = await prisma.product.findMany({
-      where: { id: { in: productIds } },
-      select: { id: true, kitchenStation: true },
-    });
-    const productMap = new Map(products.map(p => [p.id, p.kitchenStation || 'GENERAL']));
-
     // Emit new items to kitchen via WebSocket
     const itemsToEmit = updatedLines.map(line => ({
       orderId: line.orderId,
@@ -244,7 +318,7 @@ export const orderService = {
       productName: line.name,
       quantity: line.qty,
       kitchenStatus: line.kitchenStatus,
-      kitchenStation: productMap.get(line.productId) || 'GENERAL',
+      kitchenStation: line.kitchenStation || 'GENERAL',
       sentToKitchenAt: line.sentToKitchenAt,
     }));
 

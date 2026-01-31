@@ -24,30 +24,30 @@ export default function SessionHistoryTable({ sessions, loading }) {
   }
 
   return (
-    <div className="bg-white border border-neutral-200 rounded-lg overflow-hidden">
-      <div className="p-6 border-b border-neutral-200">
-        <h3 className="text-sm font-semibold text-neutral-900">Recent Sessions</h3>
+    <div className="bg-white border-2 border-neutral-200 rounded-xl overflow-hidden shadow-sm">
+      <div className="px-6 py-5 border-b-2 border-neutral-200 bg-neutral-50">
+        <h3 className="text-base font-bold text-neutral-900 uppercase tracking-wide">Recent Sessions</h3>
       </div>
       <div className="overflow-x-auto">
         <table className="w-full">
           <thead>
             <tr className="bg-neutral-50 border-b border-neutral-200">
-              <th className="px-6 py-3 text-left text-xs font-medium text-neutral-700 uppercase tracking-wider">
+              <th className="px-6 py-4 text-left text-xs font-bold text-neutral-600 uppercase tracking-wider">
                 Session ID
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-neutral-700 uppercase tracking-wider">
+              <th className="px-6 py-4 text-left text-xs font-bold text-neutral-600 uppercase tracking-wider">
                 Opened At
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-neutral-700 uppercase tracking-wider">
+              <th className="px-6 py-4 text-left text-xs font-bold text-neutral-600 uppercase tracking-wider">
                 Closed At
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-neutral-700 uppercase tracking-wider">
+              <th className="px-6 py-4 text-left text-xs font-bold text-neutral-600 uppercase tracking-wider">
                 Status
               </th>
-              <th className="px-6 py-3 text-center text-xs font-medium text-neutral-700 uppercase tracking-wider">
+              <th className="px-6 py-4 text-center text-xs font-bold text-neutral-600 uppercase tracking-wider">
                 Orders
               </th>
-              <th className="px-6 py-3 text-right text-xs font-medium text-neutral-700 uppercase tracking-wider">
+              <th className="px-6 py-4 text-right text-xs font-bold text-neutral-600 uppercase tracking-wider">
                 Revenue
               </th>
             </tr>
@@ -56,12 +56,12 @@ export default function SessionHistoryTable({ sessions, loading }) {
             {sessions.map((session) => (
               <tr key={session.sessionId} className="hover:bg-neutral-50 transition-colors">
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <span className="text-sm font-mono text-neutral-900">
+                  <span className="text-sm font-bold font-mono text-neutral-900">
                     #{session.sessionId.toString().padStart(6, '0')}
                   </span>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <span className="text-sm text-neutral-900">
+                  <span className="text-sm font-medium text-neutral-900">
                     {new Date(session.openedAt).toLocaleString('en-US', {
                       dateStyle: 'short',
                       timeStyle: 'short',
@@ -69,7 +69,7 @@ export default function SessionHistoryTable({ sessions, loading }) {
                   </span>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <span className="text-sm text-neutral-900">
+                  <span className="text-sm font-medium text-neutral-900">
                     {session.closedAt
                       ? new Date(session.closedAt).toLocaleString('en-US', {
                           dateStyle: 'short',
@@ -80,22 +80,22 @@ export default function SessionHistoryTable({ sessions, loading }) {
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <span
-                    className={`inline-flex px-2.5 py-1 text-xs font-medium rounded-full ${
+                    className={`inline-flex px-3 py-1.5 text-xs font-bold uppercase tracking-wide rounded-lg ${
                       session.status === 'open'
-                        ? 'bg-green-50 text-green-700 border border-green-200'
-                        : 'bg-neutral-100 text-neutral-600 border border-neutral-200'
+                        ? 'bg-green-50 text-green-900 border border-green-200'
+                        : 'bg-neutral-100 text-neutral-700 border border-neutral-200'
                     }`}
                   >
-                    {session.status.toUpperCase()}
+                    {session.status}
                   </span>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-center">
-                  <span className="text-sm text-neutral-900">
+                  <span className="text-sm font-bold text-neutral-900">
                     {session.orderCount || 0}
                   </span>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-right">
-                  <span className="text-sm font-semibold text-neutral-900">
+                  <span className="text-sm font-bold text-neutral-900">
                     ₹{session.totalRevenue?.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00'}
                   </span>
                 </td>

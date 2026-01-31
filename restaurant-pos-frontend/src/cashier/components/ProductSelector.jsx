@@ -51,11 +51,11 @@ export default function ProductSelector({ onProductSelect, disabled }) {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       {/* Category Tabs */}
       <div>
-        <label className="block text-xs font-medium text-neutral-700 mb-2">
-          CATEGORY
+        <label className="block text-xs font-bold text-neutral-500 uppercase tracking-wider mb-3">
+          Category
         </label>
         <div className="flex flex-wrap gap-2">
           {categories.map(category => (
@@ -63,10 +63,10 @@ export default function ProductSelector({ onProductSelect, disabled }) {
               key={category.id}
               onClick={() => setSelectedCategory(category.id)}
               disabled={disabled}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+              className={`px-5 py-2.5 rounded-lg text-sm font-bold uppercase tracking-wide transition-all ${
                 selectedCategory === category.id
-                  ? 'bg-neutral-900 text-white'
-                  : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
+                  ? 'bg-neutral-900 text-white shadow-lg'
+                  : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200 border-2 border-neutral-200'
               } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
               {category.name}
@@ -77,11 +77,11 @@ export default function ProductSelector({ onProductSelect, disabled }) {
 
       {/* Product Grid */}
       <div>
-        <label className="block text-xs font-medium text-neutral-700 mb-2">
-          SELECT PRODUCT
+        <label className="block text-xs font-bold text-neutral-500 uppercase tracking-wider mb-3">
+          Select Product
         </label>
         {filteredProducts.length === 0 ? (
-          <div className="text-sm text-neutral-500 text-center py-8">
+          <div className="text-sm font-medium text-neutral-500 text-center py-12 bg-neutral-50 rounded-lg">
             No products in this category
           </div>
         ) : (
@@ -91,14 +91,14 @@ export default function ProductSelector({ onProductSelect, disabled }) {
                 key={product.id}
                 onClick={() => onProductSelect(product)}
                 disabled={disabled}
-                className={`p-4 rounded-lg border-2 border-neutral-200 bg-white hover:border-neutral-900 hover:shadow-md transition-all text-left ${
+                className={`p-4 rounded-xl border-2 border-neutral-200 bg-white hover:border-neutral-900 hover:shadow-lg transition-all text-left ${
                   disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
                 }`}
               >
-                <div className="font-semibold text-sm text-neutral-900 line-clamp-2">
+                <div className="font-bold text-sm text-neutral-900 line-clamp-2 mb-2">
                   {product.name}
                 </div>
-                <div className="text-lg font-bold text-neutral-900 mt-2">
+                <div className="text-xl font-bold text-neutral-900">
                   ₹{product.price.toFixed(2)}
                 </div>
               </button>

@@ -73,11 +73,11 @@ export default function FloorTableSelector({ selectedTable, onTableSelect, disab
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       {/* Floor Selector */}
       <div>
-        <label className="block text-xs font-medium text-neutral-700 mb-2">
-          SELECT FLOOR
+        <label className="block text-xs font-bold text-neutral-500 uppercase tracking-wider mb-3">
+          Select Floor
         </label>
         <select
           value={selectedFloor?.id || ''}
@@ -86,7 +86,7 @@ export default function FloorTableSelector({ selectedTable, onTableSelect, disab
             setSelectedFloor(floor);
           }}
           disabled={disabled}
-          className="w-full px-3 py-2 border border-neutral-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900 disabled:bg-neutral-100 disabled:cursor-not-allowed"
+          className="w-full px-4 py-3 border-2 border-neutral-200 rounded-lg text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:border-neutral-900 disabled:bg-neutral-100 disabled:cursor-not-allowed transition-all"
         >
           {floors.map(floor => (
             <option key={floor.id} value={floor.id}>
@@ -98,15 +98,15 @@ export default function FloorTableSelector({ selectedTable, onTableSelect, disab
 
       {/* Table Grid */}
       <div>
-        <label className="block text-xs font-medium text-neutral-700 mb-2">
-          SELECT TABLE
+        <label className="block text-xs font-bold text-neutral-500 uppercase tracking-wider mb-3">
+          Select Table
         </label>
         {tables.length === 0 ? (
-          <div className="text-sm text-neutral-500 text-center py-8">
+          <div className="text-sm font-medium text-neutral-500 text-center py-12 bg-neutral-50 rounded-lg">
             No tables available
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-2 gap-3">
             {tables.map(table => {
               const isOccupied = tableOccupancy[table.id];
               const isSelected = selectedTable?.id === table.id;
@@ -116,39 +116,39 @@ export default function FloorTableSelector({ selectedTable, onTableSelect, disab
                   key={table.id}
                   onClick={() => onTableSelect(table)}
                   disabled={disabled}
-                  className={`p-4 rounded-lg border-2 transition-all text-left relative ${
+                  className={`p-5 rounded-xl border-2 transition-all text-left relative ${
                     isSelected
-                      ? 'border-neutral-900 bg-neutral-900 text-white'
+                      ? 'border-neutral-900 bg-neutral-900 text-white shadow-lg'
                       : isOccupied
-                      ? 'border-orange-400 bg-orange-50 hover:border-orange-500'
-                      : 'border-neutral-200 bg-white hover:border-neutral-400'
+                      ? 'border-amber-300 bg-amber-50 hover:border-amber-400 hover:shadow-md'
+                      : 'border-neutral-200 bg-white hover:border-neutral-400 hover:shadow-md'
                   } ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
                 >
                   {/* Occupancy Indicator */}
                   {isOccupied && !isSelected && (
-                    <div className="absolute top-2 right-2 w-3 h-3 bg-orange-500 rounded-full animate-pulse"></div>
+                    <div className="absolute top-3 right-3 w-3 h-3 bg-amber-600 rounded-full shadow-md"></div>
                   )}
                   
-                  <div className="text-lg font-bold">Table {table.number}</div>
-                  <div className={`text-xs mt-1 ${
+                  <div className="text-xl font-bold mb-1">Table {table.number}</div>
+                  <div className={`text-xs font-medium mb-2 ${
                     isSelected 
-                      ? 'text-neutral-200' 
+                      ? 'text-neutral-300' 
                       : isOccupied 
-                      ? 'text-orange-700'
+                      ? 'text-amber-700'
                       : 'text-neutral-500'
                   }`}>
                     {table.seats} seats
                   </div>
                   
                   {/* Status Badge */}
-                  <div className={`text-xs font-bold mt-2 ${
+                  <div className={`inline-block text-xs font-bold px-2 py-1 rounded uppercase tracking-wide ${
                     isSelected
-                      ? 'text-white'
+                      ? 'bg-white text-neutral-900'
                       : isOccupied
-                      ? 'text-orange-700'
-                      : 'text-green-700'
+                      ? 'bg-amber-100 text-amber-900 border border-amber-300'
+                      : 'bg-green-100 text-green-900 border border-green-300'
                   }`}>
-                    {isOccupied ? 'OCCUPIED' : 'FREE'}
+                    {isSelected ? 'Selected' : isOccupied ? 'Occupied' : 'Free'}
                   </div>
                 </button>
               );

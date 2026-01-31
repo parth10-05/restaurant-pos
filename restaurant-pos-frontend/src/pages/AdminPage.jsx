@@ -20,15 +20,21 @@ export default function AdminPage() {
 
   return (
     <div className="min-h-screen bg-neutral-50">
-      <header className="bg-white border-b border-neutral-200">
+      <header className="bg-white border-b-2 border-neutral-200 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
-            <h1 className="text-xl font-semibold text-neutral-900">Admin Dashboard</h1>
+            <div>
+              <h1 className="text-xl font-bold text-neutral-900 uppercase tracking-wide">Admin Dashboard</h1>
+              <p className="text-xs text-neutral-500 font-medium">Management Portal</p>
+            </div>
             <div className="flex items-center gap-4">
-              <span className="text-sm text-neutral-600">{user?.email}</span>
+              <div className="text-right">
+                <div className="text-sm font-semibold text-neutral-900">{user?.email}</div>
+                <div className="text-xs text-neutral-500 font-medium uppercase">{user?.role}</div>
+              </div>
               <button
                 onClick={logout}
-                className="px-4 py-2 text-sm font-medium text-neutral-700 hover:text-neutral-900 border border-neutral-300 rounded-md hover:bg-neutral-50 transition-colors"
+                className="px-4 py-2 text-sm font-bold text-neutral-700 hover:text-neutral-900 border-2 border-neutral-300 rounded-lg hover:bg-neutral-50 transition-all"
               >
                 Logout
               </button>
@@ -38,17 +44,17 @@ export default function AdminPage() {
       </header>
 
       {/* Tab Navigation */}
-      <div className="bg-white border-b border-neutral-200">
+      <div className="bg-white border-b border-neutral-200 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <nav className="flex space-x-8">
+          <nav className="flex gap-1">
             {tabs.map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+                className={`py-4 px-6 border-b-2 font-bold text-sm uppercase tracking-wide transition-all ${
                   activeTab === tab.id
-                    ? 'border-neutral-900 text-neutral-900'
-                    : 'border-transparent text-neutral-500 hover:text-neutral-700 hover:border-neutral-300'
+                    ? 'border-neutral-900 text-neutral-900 bg-neutral-50'
+                    : 'border-transparent text-neutral-500 hover:text-neutral-900 hover:bg-neutral-50'
                 }`}
               >
                 {tab.label}

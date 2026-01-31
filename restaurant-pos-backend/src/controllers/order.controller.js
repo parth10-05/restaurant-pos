@@ -73,6 +73,34 @@ export const orderController = {
     }
   },
 
+  async updateOrderLineQuantity(req, res, next) {
+    try {
+      const { id, lineId } = req.params;
+      const { qty } = req.body;
+
+      if (qty === undefined) {
+        return res.status(400).json({
+          success: false,
+          message: 'qty is required',
+        });
+      }
+
+      const order = await orderService.updateOrderLineQuantity({
+        orderId: id,
+        lineId: parseInt(lineId),
+        qty: parseInt(qty),
+      });
+
+      res.status(200).json({
+        success: true,
+        message: qty === 0 ? 'Item removed from order' : 'Item quantity updated',
+        data: order,
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+
   async sendToKitchen(req, res, next) {
     try {
       const { id } = req.params;

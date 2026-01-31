@@ -93,6 +93,26 @@ export default function CreateOrderTab({ hasSession }) {
     }
   };
 
+  const handleQuantityChange = async (lineId, newQty) => {
+    if (!currentOrder) return;
+
+    setLoading(true);
+    setError('');
+
+    try {
+      const result = await orderService.updateOrderLineQuantity(currentOrder.id, lineId, newQty);
+      if (result.success) {
+        setCurrentOrder(result.data);
+      } else {
+        setError(result.error);
+      }
+    } catch {
+      setError('Failed to update item quantity');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleCompleteOrder = async () => {
     if (!currentOrder) return;
 
@@ -180,6 +200,7 @@ export default function CreateOrderTab({ hasSession }) {
             order={currentOrder}
             onSendOrder={handleSendOrder}
             onCompleteOrder={handleCompleteOrder}
+            onQuantityChange={handleQuantityChange}
             disabled={loading}
           />
         </div>

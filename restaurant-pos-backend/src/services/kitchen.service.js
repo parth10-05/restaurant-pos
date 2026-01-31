@@ -25,7 +25,7 @@ export const kitchenService = {
    * Get all orders with items sent to kitchen
    * Excludes paid orders
    * Includes incremental items
-   * @param {string} station - Optional station filter (GRILL, FRY, DRINKS, DESSERT, GENERAL, or ALL)
+   * @param {string} station - Optional station filter (GRILL, FRYER, DRINKS, DESSERT, GENERAL, or ALL)
    */
   async getKitchenOrders(station = 'ALL') {
     // Get orders that are sent_to_kitchen or completed (not paid)
@@ -60,24 +60,16 @@ export const kitchenService = {
       },
     });
 
-    // Fetch product details to get kitchen stations
-    const productIds = [...new Set(orders.flatMap(o => o.orderLines.map(l => l.productId)))];
-    const products = await prisma.product.findMany({
-      where: { id: { in: productIds } },
-      select: { id: true, kitchenStation: true },
-    });
-    const productMap = new Map(products.map(p => [p.id, p.kitchenStation || 'GENERAL']));
-
     // Transform to kitchen-friendly format
     const kitchenOrders = orders.map(order => {
-      // Map items with kitchen station
+      // Map items with kitchen station from OrderLine directly
       const itemsWithStation = order.orderLines.map(line => ({
         id: line.id,
         productId: line.productId,
         productName: line.name,
         quantity: line.qty,
         kitchenStatus: line.kitchenStatus || KITCHEN_STATUS.PENDING,
-        kitchenStation: productMap.get(line.productId) || 'GENERAL',
+        kitchenStation: line.kitchenStation || 'GENERAL',
         sentToKitchenAt: line.sentToKitchenAt,
         preparedAt: line.preparedAt,
       }));
