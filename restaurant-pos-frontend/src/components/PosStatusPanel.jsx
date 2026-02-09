@@ -1,4 +1,5 @@
 import React from 'react';
+import { formatDuration } from '../utils/formatters';
 
 export default function PosStatusPanel({ session, loading }) {
   if (loading) {
@@ -66,7 +67,7 @@ export default function PosStatusPanel({ session, loading }) {
                     Active Since
                   </p>
                   <p className="text-base font-bold text-neutral-900">
-                    {Math.floor((new Date() - new Date(session.openedAt)) / 60000)} min
+                    {formatDuration(new Date() - new Date(session.openedAt))}
                   </p>
                 </div>
               </div>

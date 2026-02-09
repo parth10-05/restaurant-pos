@@ -1,4 +1,5 @@
 import React from 'react';
+import { formatDuration, formatCurrency } from '../utils/formatters';
 
 export default function SessionHistoryTable({ sessions, loading }) {
   if (loading) {
@@ -42,6 +43,9 @@ export default function SessionHistoryTable({ sessions, loading }) {
                 Closed At
               </th>
               <th className="px-6 py-4 text-left text-xs font-bold text-neutral-600 uppercase tracking-wider">
+                Duration
+              </th>
+              <th className="px-6 py-4 text-left text-xs font-bold text-neutral-600 uppercase tracking-wider">
                 Status
               </th>
               <th className="px-6 py-4 text-center text-xs font-bold text-neutral-600 uppercase tracking-wider">
@@ -79,6 +83,13 @@ export default function SessionHistoryTable({ sessions, loading }) {
                   </span>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
+                  <span className="text-sm font-medium text-neutral-900">
+                    {formatDuration(
+                      (session.closedAt ? new Date(session.closedAt) : new Date()) - new Date(session.openedAt)
+                    )}
+                  </span>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
                   <span
                     className={`inline-flex px-3 py-1.5 text-xs font-bold uppercase tracking-wide rounded-lg ${
                       session.status === 'open'
@@ -96,7 +107,7 @@ export default function SessionHistoryTable({ sessions, loading }) {
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-right">
                   <span className="text-sm font-bold text-neutral-900">
-                    ₹{session.totalRevenue?.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00'}
+                    {formatCurrency(session.totalRevenue || 0)}
                   </span>
                 </td>
               </tr>

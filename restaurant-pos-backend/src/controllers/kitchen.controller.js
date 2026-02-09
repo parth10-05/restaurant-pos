@@ -128,4 +128,125 @@ export const kitchenController = {
       next(error);
     }
   },
+
+  // ─── STOCK MANAGEMENT ────────────────────────────────────────────────
+
+  /**
+   * Get all ingredient stock levels
+   */
+  async getStock(req, res, next) {
+    try {
+      const stock = await kitchenService.getIngredientStock();
+
+      res.status(200).json({
+        success: true,
+        data: stock,
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  /**
+   * Get low stock alerts
+   */
+  async getLowStockAlerts(req, res, next) {
+    try {
+      const alerts = await kitchenService.getLowStockAlerts();
+
+      res.status(200).json({
+        success: true,
+        data: alerts,
+        count: alerts.length,
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  /**
+   * Update ingredient stock (set to specific value)
+   */
+  async updateStock(req, res, next) {
+    try {
+      const { ingredientId } = req.params;
+      const { quantity, notes } = req.body;
+
+      if (quantity === undefined || quantity < 0) {
+        return res.status(400).json({
+          success: false,
+          message: 'Quantity is required and must be non-negative',
+        });
+      }
+
+      const result = await kitchenService.updateIngredientStock({
+        ingredientId,
+        quantity: parseFloat(quantity),
+        notes,
+        userId: req.user?.userId,
+      });
+
+      res.status(200).json({
+        success: true,
+        message: `Stock updated: ${result.previousStock} → ${result.newStock} ${result.name}`,
+        data: result,
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  /**
+   * Add stock to an ingredient
+   */
+  async addStock(req, res, next) {
+    try {
+      const { ingredientId } = req.params;
+      const { quantity, notes } = req.body;
+
+      if (!quantity || quantity <= 0) {
+        return res.status(400).json({
+          success: false,
+          message: 'Quantity must be a positive number',
+        });
+      }
+
+      const result = await kitchenService.addStock({
+        ingredientId,
+        quantityToAdd: parseFloat(quantity),
+        notes,
+        userId: req.user?.userId,
+      });
+
+      res.status(200).json({
+        success: true,
+        message: `Added ${quantity} to ${result.name}`,
+        data: result,
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  /**
+   * Get stock history for an ingredient
+   */
+  async getStockHistory(req, res, next) {
+    try {
+      const { ingredientId } = req.params;
+      const { limit } = req.query;
+
+      const history = await kitchenService.getStockHistory(
+        ingredientId,
+        limit ? parseInt(limit) : 20
+      );
+
+      res.status(200).json({
+        success: true,
+        data: history,
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
 };

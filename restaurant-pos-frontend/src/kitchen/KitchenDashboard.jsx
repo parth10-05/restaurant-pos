@@ -2,7 +2,9 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { io } from 'socket.io-client';
 import OrderCard from './components/OrderCard';
 import StationSelector from './components/StationSelector';
+import StockManagement from './components/StockManagement';
 import kitchenService from '../services/kitchen.service';
+import { formatDuration } from '../utils/formatters';
 
 const SOCKET_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
@@ -26,6 +28,8 @@ export default function KitchenDashboard() {
   const [updatingItems, setUpdatingItems] = useState(new Set());
   const [selectedStation, setSelectedStation] = useState('ALL');
   const [isSocketConnected, setIsSocketConnected] = useState(false);
+  const [showStockManagement, setShowStockManagement] = useState(false);
+  const [lowStockCount, setLowStockCount] = useState(0);
   
   const socketRef = useRef(null);
 
@@ -190,6 +194,16 @@ export default function KitchenDashboard() {
     }
   }, [selectedStation]);
 
+  // Fetch low stock count for badge
+  const fetchLowStockCount = useCallback(async () => {
+    try {
+      const result = await kitchenService.getLowStockAlerts();
+      setLowStockCount(result.count || 0);
+    } catch (err) {
+      console.error('Failed to fetch low stock count:', err);
+    }
+  }, []);
+
   // Handle item status change
   const handleItemStatusChange = async (itemId, newStatus) => {
     // Prevent multiple simultaneous updates on same item
@@ -228,7 +242,8 @@ export default function KitchenDashboard() {
   // Initial fetch and refetch on station change
   useEffect(() => {
     fetchOrders();
-  }, [fetchOrders, selectedStation]);
+    fetchLowStockCount();
+  }, [fetchOrders, fetchLowStockCount, selectedStation]);
 
   // Polling fallback (only when socket disconnected)
   useEffect(() => {
@@ -252,14 +267,12 @@ export default function KitchenDashboard() {
     if (!lastUpdate) return 'Never';
     
     const now = new Date();
-    const diffSeconds = Math.floor((now - lastUpdate) / 1000);
+    const diffMs = now - lastUpdate;
     
-    if (diffSeconds < 10) return 'Just now';
-    if (diffSeconds < 60) return `${diffSeconds}s ago`;
+    if (diffMs < 10000) return 'Just now';
+    if (diffMs < 60000) return `${Math.floor(diffMs / 1000)}s ago`;
     
-    const diffMinutes = Math.floor(diffSeconds / 60);
-    if (diffMinutes === 1) return '1 min ago';
-    return `${diffMinutes} mins ago`;
+    return formatDuration(diffMs) + ' ago';
   };
 
   return (
@@ -286,6 +299,19 @@ export default function KitchenDashboard() {
               <div className="text-sm text-neutral-600">
                 Updated: {formatLastUpdate()}
               </div>
+
+              {/* Stock Management Button */}
+              <button
+                onClick={() => setShowStockManagement(true)}
+                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors font-medium relative"
+              >
+                📦 Stock
+                {lowStockCount > 0 && (
+                  <span className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-bold animate-pulse">
+                    {lowStockCount}
+                  </span>
+                )}
+              </button>
 
               {/* Refresh Button */}
               <button
@@ -354,6 +380,15 @@ export default function KitchenDashboard() {
           </div>
         )}
       </main>
+
+      {/* Stock Management Modal */}
+      <StockManagement
+        isOpen={showStockManagement}
+        onClose={() => {
+          setShowStockManagement(false);
+          fetchLowStockCount(); // Refresh count when closing
+        }}
+      />
     </div>
   );
 }

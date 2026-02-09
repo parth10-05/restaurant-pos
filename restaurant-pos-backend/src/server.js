@@ -4,6 +4,7 @@ import app from './app.js';
 import { config } from './config/env.js';
 import prisma from './prisma/client.js';
 import { initializeKitchenSocket } from './socket/kitchen.socket.js';
+import { initializeScheduler, stopScheduler } from './ai/index.js';
 
 const startServer = async () => {
   try {
@@ -25,6 +26,11 @@ const startServer = async () => {
     // Initialize kitchen socket handlers
     initializeKitchenSocket(io);
 
+    // Initialize AI scheduler after server starts
+    if (process.env.ENABLE_AI_SCHEDULER !== 'false') {
+      initializeScheduler();
+    }
+
     httpServer.listen(config.port, () => {
       console.log(`🚀 Server running on port ${config.port}`);
       console.log(`📍 Health check: http://localhost:${config.port}/api/health`);
@@ -37,17 +43,15 @@ const startServer = async () => {
   }
 };
 
-// Graceful shutdown
-process.on('SIGINT', async () => {
-  console.log('\n🛑 Shutting down gracefully...');
+// Graceful shutdown handler
+const gracefulShutdown = async (signal) => {
+  console.log(`\n🛑 Received ${signal}. Shutting down gracefully...`);
+  stopScheduler();
   await prisma.$disconnect();
   process.exit(0);
-});
+};
 
-process.on('SIGTERM', async () => {
-  console.log('\n🛑 Shutting down gracefully...');
-  await prisma.$disconnect();
-  process.exit(0);
-});
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 
 startServer();

@@ -15,6 +15,20 @@ enum KitchenStation {
   GENERAL
 }
 
+enum StockChangeSource {
+  ORDER_CONSUMPTION
+  WASTE
+  MANUAL_ADJUSTMENT
+  PURCHASE
+}
+
+enum WasteReason {
+  SPOILAGE
+  OVERCOOKED
+  RETURNED
+  PREP_LOSS
+}
+
 model User {
   id          String        @id @default(uuid())
   email       String        @unique
@@ -24,6 +38,9 @@ model User {
   updatedAt   DateTime      @updatedAt
   orders      Order[]
   posSessions POS_Session[]
+  aiJobs      AIJob[]
+  ledgerEntries InventoryLedger[]
+  wasteEvents   WasteEvent[]
 }
 
 model ProductCategory {
@@ -35,22 +52,27 @@ model ProductCategory {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  demandForecasts ProductDemandForecast[]
 }
 
 model Product {
-  id            String   @id @default(uuid())
-  name          String
-  description   String?
-  price         Float
-  taxPercent    Float
-  isActive      Boolean  @default(true)
-  sendToKitchen Boolean  @default(true)
+  id             String   @id @default(uuid())
+  name           String
+  description    String?
+  price          Float
+  taxPercent     Float
+  isActive       Boolean  @default(true)
+  sendToKitchen  Boolean  @default(true)
   kitchenStation KitchenStation @default(GENERAL)
-  categoryId    String
-  category      ProductCategory @relation(fields: [categoryId], references: [id])
+  categoryId     String
+  category       ProductCategory @relation(fields: [categoryId], references: [id])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  demandForecasts    ProductDemandForecast[]
+  productIngredients ProductIngredient[]
 }
 
 model Floor {
@@ -88,6 +110,7 @@ model POS_Session {
   closingTotal Float?
   user         User      @relation(fields: [openedBy], references: [id])
   orders       Order[]
+  wasteEvents  WasteEvent[]
 }
 
 model Order {
@@ -105,6 +128,7 @@ model Order {
   orderLines    OrderLine[]
   payment       Payment?
   kitchenTicket KitchenTicket?
+  ledgerEntries InventoryLedger[]
 }
 
 model OrderLine {
@@ -158,26 +182,180 @@ model PosConfig {
 
 model ReceiptSettings {
   id                String   @id @default(uuid())
-  
   restaurantName    String   @default("Adani Restaurant")
   address           String   @default("")
   phone             String?
   gstNumber         String?
-  
   logoUrl           String?
-  
   showOrderNumber   Boolean  @default(true)
   showCashier       Boolean  @default(true)
   showPaymentMethod Boolean  @default(true)
   showItemTax       Boolean  @default(true)
   showTotalTax      Boolean  @default(true)
   showQrCode        Boolean  @default(false)
-  
   paperWidth        String   @default("80mm")
   fontScale         String   @default("normal")
-  
   footerText        String?
-  
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
+}
+
+model SalesForecast {
+  id             String   @id @default(uuid())
+  granularity    String   // "daily" | "hourly"
+  targetDate     DateTime
+  hour           Int?     // 0-23 for hourly, null for daily
+  forecastValue  Float    // predicted revenue
+  forecastOrders Int?     // predicted order count
+  lowerBound     Float?
+  upperBound     Float?
+  baseline       Float?   // historical mean
+  method         String   // "sma_7", "ewma_0.3", etc.
+  generatedAt    DateTime @default(now())
+
+  @@index([granularity, targetDate])
+}
+
+model ProductDemandForecast {
+  id          String   @id @default(uuid())
+  productId   String
+  categoryId  String?
+  granularity String   // "daily"
+  targetDate  DateTime
+  forecastQty Float
+  baselineQty Float?
+  lowerBound  Float?
+  upperBound  Float?
+  method      String
+  generatedAt DateTime @default(now())
+
+  product  Product          @relation(fields: [productId], references: [id])
+  category ProductCategory? @relation(fields: [categoryId], references: [id])
+
+  @@index([productId, targetDate])
+  @@index([categoryId, targetDate])
+}
+
+model SalesAnomaly {
+  id            String   @id @default(uuid())
+  scope         String   // "sales_daily" | "sales_hourly" | "product"
+  targetId      String?  // productId when scope=product
+  windowStart   DateTime
+  windowEnd     DateTime
+  hour          Int?
+  metric        String   // "revenue" | "orders" | "qty"
+  observedValue Float
+  expectedValue Float
+  zScore        Float
+  deviationPct  Float
+  direction     String   // "spike" | "drop"
+  method        String   // "zscore_v1"
+  detectedAt    DateTime @default(now())
+
+  @@index([scope, windowStart])
+}
+
+model AIJob {
+  id          String    @id @default(uuid())
+  type        String    // "sales_forecast" | "demand_forecast" | "anomaly_detection"
+  status      String    @default("pending")
+  params      String?   // JSON stringified params
+  result      String?   // JSON stringified result summary
+  error       String?
+  triggeredBy String?
+  user        User?     @relation(fields: [triggeredBy], references: [id])
+  startedAt   DateTime  @default(now())
+  finishedAt  DateTime?
+
+  @@index([type, status])
+  @@index([startedAt])
+}
+
+// ─── INVENTORY MODULE MODELS ─────────────────────────────────────────
+
+model Ingredient {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  unit        String   // "kg", "g", "l", "ml", "pcs", etc.
+  costPerUnit Float    @default(0)
+  minStock    Float    @default(0) // alert threshold
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  productIngredients ProductIngredient[]
+  stock              InventoryStock?
+  ledgerEntries      InventoryLedger[]
+  wasteEvents        WasteEvent[]
+}
+
+model ProductIngredient {
+  id           String @id @default(uuid())
+  productId    String
+  ingredientId String
+  quantity     Float  // quantity of ingredient per 1 unit of product
+
+  product    Product    @relation(fields: [productId], references: [id], onDelete: Cascade)
+  ingredient Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([productId, ingredientId])
+  @@index([productId])
+  @@index([ingredientId])
+}
+
+model InventoryStock {
+  id           String   @id @default(uuid())
+  ingredientId String   @unique
+  quantity     Float    @default(0)
+  lastUpdated  DateTime @default(now())
+
+  ingredient Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
+
+  @@index([ingredientId])
+}
+
+model InventoryLedger {
+  id           String            @id @default(uuid())
+  ingredientId String
+  changeQty    Float             // positive for additions, negative for deductions
+  balanceAfter Float
+  source       StockChangeSource
+  referenceId  String?           // orderId, purchaseId, etc.
+  notes        String?
+  createdBy    String?
+  createdAt    DateTime          @default(now())
+
+  ingredient Ingredient @relation(fields: [ingredientId], references: [id])
+  user       User?      @relation(fields: [createdBy], references: [id])
+  order      Order?     @relation(fields: [referenceId], references: [id])
+
+  @@index([ingredientId, createdAt])
+  @@index([source])
+  @@index([referenceId])
+}
+
+// ─── WASTE TRACKING MODULE ───────────────────────────────────────────
+
+model WasteEvent {
+  id           String         @id @default(uuid())
+  ingredientId String
+  quantity     Float          // always positive; represents amount wasted
+  reason       WasteReason
+  station      KitchenStation @default(GENERAL)
+  sessionId    String?        // link to active POS session if available
+  notes        String?
+  createdBy    String?
+  createdAt    DateTime       @default(now())
+
+  ingredient Ingredient   @relation(fields: [ingredientId], references: [id])
+  session    POS_Session? @relation(fields: [sessionId], references: [id])
+  user       User?        @relation(fields: [createdBy], references: [id])
+
+  @@index([ingredientId, createdAt])
+  @@index([reason])
+  @@index([station])
+  @@index([sessionId])
 }

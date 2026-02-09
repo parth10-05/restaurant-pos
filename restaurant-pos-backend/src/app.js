@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import routes from './routes/index.js';
+import adminAIRoutes from './routes/admin.ai.routes.js';
 
 const app = express();
 
@@ -9,6 +10,9 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.use('/api', routes);
+
+// AI Module routes (admin only)
+app.use('/api/admin/ai', adminAIRoutes);
 
 app.use((err, req, res, next) => {
   console.error(err.stack);

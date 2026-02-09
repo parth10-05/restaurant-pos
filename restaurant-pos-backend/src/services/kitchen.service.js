@@ -378,4 +378,167 @@ export const kitchenService = {
 
     return tickets;
   },
+
+  // ─── STOCK MANAGEMENT ────────────────────────────────────────────────
+
+  /**
+   * Get all ingredients with current stock levels
+   * Shows low stock warnings
+   */
+  async getIngredientStock() {
+    const ingredients = await prisma.ingredient.findMany({
+      where: { isActive: true },
+      include: {
+        stock: true,
+      },
+      orderBy: { name: 'asc' },
+    });
+
+    return ingredients.map(ing => ({
+      id: ing.id,
+      name: ing.name,
+      unit: ing.unit,
+      costPerUnit: ing.costPerUnit,
+      minStock: ing.minStock,
+      currentStock: ing.stock?.quantity || 0,
+      lastUpdated: ing.stock?.lastUpdated || null,
+      isLowStock: (ing.stock?.quantity || 0) <= ing.minStock,
+    }));
+  },
+
+  /**
+   * Update ingredient stock (manual adjustment)
+   * Used by kitchen staff to add received inventory or correct counts
+   */
+  async updateIngredientStock({ ingredientId, quantity, notes, userId }) {
+    // Validate ingredient exists
+    const ingredient = await prisma.ingredient.findUnique({
+      where: { id: ingredientId },
+      include: { stock: true },
+    });
+
+    if (!ingredient) {
+      const error = new Error('Ingredient not found');
+      error.statusCode = 404;
+      throw error;
+    }
+
+    const currentQty = ingredient.stock?.quantity || 0;
+    const changeQty = quantity - currentQty;
+    const source = changeQty > 0 ? 'PURCHASE' : 'MANUAL_ADJUSTMENT';
+
+    // Update or create stock record
+    let stock;
+    if (ingredient.stock) {
+      stock = await prisma.inventoryStock.update({
+        where: { id: ingredient.stock.id },
+        data: {
+          quantity: quantity,
+          lastUpdated: new Date(),
+        },
+      });
+    } else {
+      stock = await prisma.inventoryStock.create({
+        data: {
+          ingredientId,
+          quantity: quantity,
+        },
+      });
+    }
+
+    // Create ledger entry for tracking
+    await prisma.inventoryLedger.create({
+      data: {
+        ingredientId,
+        changeQty,
+        balanceAfter: quantity,
+        source,
+        notes: notes || `Stock ${changeQty > 0 ? 'added' : 'adjusted'} by kitchen`,
+        createdBy: userId,
+      },
+    });
+
+    return {
+      id: ingredient.id,
+      name: ingredient.name,
+      unit: ingredient.unit,
+      previousStock: currentQty,
+      newStock: quantity,
+      change: changeQty,
+    };
+  },
+
+  /**
+   * Add stock to an ingredient (quick add)
+   */
+  async addStock({ ingredientId, quantityToAdd, notes, userId }) {
+    const ingredient = await prisma.ingredient.findUnique({
+      where: { id: ingredientId },
+      include: { stock: true },
+    });
+
+    if (!ingredient) {
+      const error = new Error('Ingredient not found');
+      error.statusCode = 404;
+      throw error;
+    }
+
+    const currentQty = ingredient.stock?.quantity || 0;
+    const newQty = currentQty + quantityToAdd;
+
+    return this.updateIngredientStock({
+      ingredientId,
+      quantity: newQty,
+      notes: notes || `Added ${quantityToAdd} ${ingredient.unit}`,
+      userId,
+    });
+  },
+
+  /**
+   * Get stock history (ledger entries) for an ingredient
+   */
+  async getStockHistory(ingredientId, limit = 20) {
+    const entries = await prisma.inventoryLedger.findMany({
+      where: { ingredientId },
+      include: {
+        user: {
+          select: { email: true },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+      take: limit,
+    });
+
+    return entries.map(entry => ({
+      id: entry.id,
+      changeQty: entry.changeQty,
+      balanceAfter: entry.balanceAfter,
+      source: entry.source,
+      notes: entry.notes,
+      createdBy: entry.user?.email || 'System',
+      createdAt: entry.createdAt,
+    }));
+  },
+
+  /**
+   * Get low stock alerts
+   */
+  async getLowStockAlerts() {
+    const ingredients = await prisma.ingredient.findMany({
+      where: { isActive: true },
+      include: { stock: true },
+    });
+
+    return ingredients
+      .filter(ing => (ing.stock?.quantity || 0) <= ing.minStock)
+      .map(ing => ({
+        id: ing.id,
+        name: ing.name,
+        unit: ing.unit,
+        currentStock: ing.stock?.quantity || 0,
+        minStock: ing.minStock,
+        shortage: ing.minStock - (ing.stock?.quantity || 0),
+      }))
+      .sort((a, b) => b.shortage - a.shortage);
+  },
 };

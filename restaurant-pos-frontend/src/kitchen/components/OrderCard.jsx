@@ -1,5 +1,6 @@
 import React from 'react';
 import KitchenItemRow from './KitchenItemRow';
+import { formatDuration } from '../../utils/formatters';
 
 /**
  * Order card component for kitchen display
@@ -46,11 +47,10 @@ export default function OrderCard({ order, onItemStatusChange, updatingItems }) 
 
     const sentTime = new Date(firstItem.sentToKitchenAt);
     const now = new Date();
-    const diffMinutes = Math.floor((now - sentTime) / 1000 / 60);
+    const diffMs = now - sentTime;
 
-    if (diffMinutes < 1) return 'Just now';
-    if (diffMinutes === 1) return '1 min';
-    return `${diffMinutes} mins`;
+    if (diffMs < 60000) return 'Just now';
+    return formatDuration(diffMs);
   };
 
   // Get border color based on urgency and readiness

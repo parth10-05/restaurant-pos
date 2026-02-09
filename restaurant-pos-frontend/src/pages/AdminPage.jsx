@@ -5,6 +5,7 @@ import ProductsTab from '../admin/tabs/ProductsTab';
 import ReportsTab from '../admin/tabs/ReportsTab';
 import SettingsTab from '../admin/tabs/SettingsTab';
 import FloorTablesTab from '../admin/tabs/FloorTablesTab';
+import AITab from '../admin/tabs/AITab';
 
 export default function AdminPage() {
   const { user, logout } = useAuthStore();
@@ -15,6 +16,7 @@ export default function AdminPage() {
     { id: 'products', label: 'Products' },
     { id: 'floors', label: 'Floors & Tables' },
     { id: 'reports', label: 'Reports' },
+    { id: 'ai', label: 'AI Predictions' },
     { id: 'settings', label: 'Settings' },
   ];
 
@@ -70,6 +72,7 @@ export default function AdminPage() {
         {activeTab === 'products' && <ProductsTab />}
         {activeTab === 'floors' && <FloorTablesTab />}
         {activeTab === 'reports' && <ReportsTab />}
+        {activeTab === 'ai' && <AITab />}
         {activeTab === 'settings' && <SettingsTab />}
       </main>
     </div>

@@ -1,4 +1,5 @@
 import React from 'react';
+import { formatDuration, formatCurrency } from '../../utils/formatters';
 
 export default function SessionPerformanceTable({ data, loading }) {
   if (loading) {
@@ -48,6 +49,7 @@ export default function SessionPerformanceTable({ data, loading }) {
               <th className="text-left py-3 px-4 text-sm font-medium text-neutral-700">Session ID</th>
               <th className="text-left py-3 px-4 text-sm font-medium text-neutral-700">Opened At</th>
               <th className="text-left py-3 px-4 text-sm font-medium text-neutral-700">Closed At</th>
+              <th className="text-left py-3 px-4 text-sm font-medium text-neutral-700">Duration</th>
               <th className="text-left py-3 px-4 text-sm font-medium text-neutral-700">Status</th>
               <th className="text-right py-3 px-4 text-sm font-medium text-neutral-700">Orders</th>
               <th className="text-right py-3 px-4 text-sm font-medium text-neutral-700">Revenue</th>
@@ -59,6 +61,11 @@ export default function SessionPerformanceTable({ data, loading }) {
                 <td className="py-3 px-4 text-sm text-neutral-600 font-mono">{session.sessionId.slice(0, 8)}</td>
                 <td className="py-3 px-4 text-sm text-neutral-600">{formatDateTime(session.openedAt)}</td>
                 <td className="py-3 px-4 text-sm text-neutral-600">{formatDateTime(session.closedAt)}</td>
+                <td className="py-3 px-4 text-sm text-neutral-600">
+                  {formatDuration(
+                    (session.closedAt ? new Date(session.closedAt) : new Date()) - new Date(session.openedAt)
+                  )}
+                </td>
                 <td className="py-3 px-4">
                   <span
                     className={`inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium ${
@@ -74,7 +81,7 @@ export default function SessionPerformanceTable({ data, loading }) {
                   {session.orderCount}
                 </td>
                 <td className="py-3 px-4 text-sm text-neutral-900 text-right font-medium">
-                  ₹{session.totalRevenue.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  {formatCurrency(session.totalRevenue)}
                 </td>
               </tr>
             ))}

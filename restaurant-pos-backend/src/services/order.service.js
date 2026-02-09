@@ -10,6 +10,97 @@ const ORDER_STATUS = {
   PAID: 'paid',
 };
 
+/**
+ * Decrement ingredient stock based on order lines
+ * Creates ledger entries for tracking
+ */
+async function decrementStockForOrderLines(orderId, orderLines, tx = prisma) {
+  // Get all product IDs from order lines
+  const productIds = [...new Set(orderLines.map(line => line.productId))];
+  
+  // Get product ingredients for all products
+  const productIngredients = await tx.productIngredient.findMany({
+    where: {
+      productId: { in: productIds },
+    },
+    include: {
+      ingredient: {
+        include: {
+          stock: true,
+        },
+      },
+    },
+  });
+  
+  // Build a map of productId -> ingredients
+  const productIngredientMap = {};
+  for (const pi of productIngredients) {
+    if (!productIngredientMap[pi.productId]) {
+      productIngredientMap[pi.productId] = [];
+    }
+    productIngredientMap[pi.productId].push(pi);
+  }
+  
+  // Calculate total consumption per ingredient
+  const consumptionMap = {}; // ingredientId -> { total, ingredient }
+  
+  for (const line of orderLines) {
+    const ingredients = productIngredientMap[line.productId] || [];
+    
+    for (const pi of ingredients) {
+      const consumedQty = pi.quantity * line.qty;
+      
+      if (!consumptionMap[pi.ingredientId]) {
+        consumptionMap[pi.ingredientId] = {
+          total: 0,
+          ingredient: pi.ingredient,
+        };
+      }
+      consumptionMap[pi.ingredientId].total += consumedQty;
+    }
+  }
+  
+  // Deduct from stock and create ledger entries
+  for (const [ingredientId, data] of Object.entries(consumptionMap)) {
+    const { total, ingredient } = data;
+    const currentStock = ingredient.stock?.quantity || 0;
+    const newStock = Math.max(0, currentStock - total); // Don't go below 0
+    
+    // Update stock
+    if (ingredient.stock) {
+      await tx.inventoryStock.update({
+        where: { id: ingredient.stock.id },
+        data: {
+          quantity: newStock,
+          lastUpdated: new Date(),
+        },
+      });
+    } else {
+      // Create stock record if it doesn't exist
+      await tx.inventoryStock.create({
+        data: {
+          ingredientId,
+          quantity: newStock,
+        },
+      });
+    }
+    
+    // Create ledger entry
+    await tx.inventoryLedger.create({
+      data: {
+        ingredientId,
+        changeQty: -total, // Negative for consumption
+        balanceAfter: newStock,
+        source: 'ORDER_CONSUMPTION',
+        referenceId: orderId,
+        notes: `Order consumption`,
+      },
+    });
+  }
+  
+  return Object.keys(consumptionMap).length;
+}
+
 // Valid payment methods
 const PAYMENT_METHODS = ['cash', 'digital', 'upi'];
 
@@ -291,6 +382,15 @@ export const orderService = {
         sentToKitchenAt: new Date(),
       },
     });
+
+    // Decrement ingredient stock based on the items sent
+    try {
+      const ingredientsUpdated = await decrementStockForOrderLines(orderId, unsentLines);
+      console.log(`[Order ${orderId.slice(-8)}] Decremented stock for ${ingredientsUpdated} ingredients`);
+    } catch (stockError) {
+      console.error(`[Order ${orderId.slice(-8)}] Stock decrement error:`, stockError.message);
+      // Continue even if stock update fails - don't block the order
+    }
 
     // Get updated order lines with product info for socket emission
     const updatedLines = await prisma.orderLine.findMany({
