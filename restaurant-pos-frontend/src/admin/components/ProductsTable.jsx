@@ -5,6 +5,7 @@ export default function ProductsTable({
   onEdit,
   onDelete,
   loading,
+  showCategory = false,
 }) {
   if (loading) {
     return (
@@ -32,6 +33,11 @@ export default function ProductsTable({
             <th className="px-4 py-3 text-left text-xs font-medium text-neutral-700 uppercase tracking-wider">
               Product Name
             </th>
+            {showCategory && (
+              <th className="px-4 py-3 text-left text-xs font-medium text-neutral-700 uppercase tracking-wider">
+                Category
+              </th>
+            )}
             <th className="px-4 py-3 text-right text-xs font-medium text-neutral-700 uppercase tracking-wider">
               Price
             </th>
@@ -64,6 +70,13 @@ export default function ProductsTable({
                   )}
                 </div>
               </td>
+              {showCategory && (
+                <td className="px-4 py-3">
+                  <span className="inline-flex px-2.5 py-1 text-xs font-medium rounded-full bg-neutral-100 text-neutral-700">
+                    {product.category?.name || 'N/A'}
+                  </span>
+                </td>
+              )}
               <td className="px-4 py-3 text-right">
                 <span className="text-sm font-semibold text-neutral-900">
                   ₹{product.price.toLocaleString('en-IN', {

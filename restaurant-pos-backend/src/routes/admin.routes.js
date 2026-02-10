@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { posConfigController } from '../controllers/posConfig.controller.js';
 import { wasteController } from '../controllers/waste.controller.js';
 import * as analyticsController from '../controllers/analytics.controller.js';
+import { ingredientController } from '../controllers/ingredient.controller.js';
 import { authMiddleware } from '../middlewares/auth.middleware.js';
 import { requireRole } from '../middlewares/role.middleware.js';
 
@@ -19,6 +20,25 @@ router.put('/pos-config', posConfigController.updateConfig);
 
 // Helper endpoint for payment methods
 router.get('/payment-methods', posConfigController.getAvailablePaymentMethods);
+
+// ─── INGREDIENT MANAGEMENT ───────────────────────────────────────────
+// Get all ingredients (with optional search)
+router.get('/ingredients', ingredientController.getAll);
+
+// Search ingredients
+router.get('/ingredients/search', ingredientController.search);
+
+// Get ingredient by ID
+router.get('/ingredients/:id', ingredientController.getById);
+
+// Create new ingredient
+router.post('/ingredients', ingredientController.create);
+
+// Update ingredient
+router.put('/ingredients/:id', ingredientController.update);
+
+// Delete ingredient
+router.delete('/ingredients/:id', ingredientController.delete);
 
 // ─── WASTE TRACKING (Admin) ──────────────────────────────────────────
 // Get waste events with filters

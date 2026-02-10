@@ -6,6 +6,7 @@ export const productController = {
       const filters = {
         categoryId: req.query.categoryId,
         isActive: req.query.isActive === 'true' ? true : req.query.isActive === 'false' ? false : undefined,
+        search: req.query.search,
       };
 
       const products = await productService.getAllProducts(filters);

@@ -20,14 +20,22 @@ export const categoryService = {
     const categories = await prisma.productCategory.findMany({
       where,
       include: {
-        _count: {
-          select: { products: true },
+        products: {
+          where: { isActive: true },
+          select: { id: true },
         },
       },
       orderBy: { sequence: 'asc' },
     });
 
-    return categories;
+    // Manually add the count
+    return categories.map(category => ({
+      ...category,
+      _count: {
+        products: category.products.length,
+      },
+      products: undefined, // Remove products array from response
+    }));
   },
 
   /**
@@ -37,8 +45,9 @@ export const categoryService = {
     const category = await prisma.productCategory.findUnique({
       where: { id },
       include: {
-        _count: {
-          select: { products: true },
+        products: {
+          where: { isActive: true },
+          select: { id: true },
         },
       },
     });
@@ -49,7 +58,14 @@ export const categoryService = {
       throw error;
     }
 
-    return category;
+    // Add the count manually
+    return {
+      ...category,
+      _count: {
+        products: category.products.length,
+      },
+      products: undefined, // Remove products array from response
+    };
   },
 
   /**

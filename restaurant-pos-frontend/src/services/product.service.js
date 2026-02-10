@@ -90,6 +90,7 @@ export const productService = {
       const params = {};
       if (filters.categoryId) params.categoryId = filters.categoryId;
       if (filters.isActive !== undefined) params.isActive = filters.isActive;
+      if (filters.search) params.search = filters.search;
 
       const response = await api.get('/admin/products', { params });
       return {
