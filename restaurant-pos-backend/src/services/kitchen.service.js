@@ -190,6 +190,26 @@ export const kitchenService = {
       },
     });
 
+    // Check if all items in the order are ready and update order status
+    if (newStatus === KITCHEN_STATUS.READY) {
+      const pendingItems = await prisma.orderLine.count({
+        where: {
+          orderId: updatedItem.orderId,
+          sentToKitchen: true,
+          kitchenStatus: {
+            not: KITCHEN_STATUS.READY
+          }
+        }
+      });
+
+      if (pendingItems === 0) {
+        await prisma.order.update({
+          where: { id: updatedItem.orderId },
+          data: { status: ORDER_STATUS.COMPLETED }
+        });
+      }
+    }
+
     return {
       id: updatedItem.id,
       productName: updatedItem.name,
