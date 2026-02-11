@@ -192,6 +192,7 @@ export const kitchenService = {
 
     // Check if all items in the order are ready and update order status
     if (newStatus === KITCHEN_STATUS.READY) {
+      // Count remaining items that are sent to kitchen but not yet ready
       const pendingItems = await prisma.orderLine.count({
         where: {
           orderId: updatedItem.orderId,
@@ -202,6 +203,7 @@ export const kitchenService = {
         }
       });
 
+      // If all sent items are ready, mark order as completed (ready for payment)
       if (pendingItems === 0) {
         await prisma.order.update({
           where: { id: updatedItem.orderId },
@@ -410,6 +412,17 @@ export const kitchenService = {
       where: { isActive: true },
       include: {
         stock: true,
+        productIngredients: {
+          include: {
+            product: {
+              select: {
+                id: true,
+                name: true,
+                isActive: true,
+              },
+            },
+          },
+        },
       },
       orderBy: { name: 'asc' },
     });
@@ -423,6 +436,12 @@ export const kitchenService = {
       currentStock: ing.stock?.quantity || 0,
       lastUpdated: ing.stock?.lastUpdated || null,
       isLowStock: (ing.stock?.quantity || 0) <= ing.minStock,
+      usedInProducts: ing.productIngredients.map(pi => ({
+        productId: pi.product.id,
+        productName: pi.product.name,
+        quantity: pi.quantity,
+        isActive: pi.product.isActive,
+      })),
     }));
   },
 

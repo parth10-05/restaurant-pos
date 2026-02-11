@@ -18,6 +18,7 @@ export default function StockManagement({ isOpen, onClose }) {
   const [historyId, setHistoryId] = useState(null);
   const [history, setHistory] = useState([]);
   const [saving, setSaving] = useState(false);
+  const [viewingUsageId, setViewingUsageId] = useState(null);
 
   // Fetch stock data
   const fetchStock = async () => {
@@ -286,6 +287,13 @@ export default function StockManagement({ isOpen, onClose }) {
                         ) : (
                           <>
                             <button
+                              onClick={() => setViewingUsageId(item.id)}
+                              className="px-3 py-1 bg-purple-100 text-purple-700 text-sm rounded hover:bg-purple-200"
+                              title="View products using this ingredient"
+                            >
+                              🍽️ Used in
+                            </button>
+                            <button
                               onClick={() => { setEditingId(item.id); setEditValue(item.currentStock.toString()); }}
                               className="px-3 py-1 bg-neutral-100 text-neutral-700 text-sm rounded hover:bg-neutral-200"
                               title="Edit stock"
@@ -357,6 +365,91 @@ export default function StockManagement({ isOpen, onClose }) {
             </div>
           </div>
         )}
+
+        {/* Product Usage Modal */}
+        {viewingUsageId && (() => {
+          const ingredient = stock.find(item => item.id === viewingUsageId);
+          return (
+            <div className="absolute inset-0 bg-black/50 flex items-center justify-center p-4">
+              <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[70vh] flex flex-col">
+                <div className="px-6 py-4 border-b border-neutral-200 flex items-center justify-between">
+                  <div>
+                    <h3 className="text-lg font-bold text-neutral-900">Products Using {ingredient?.name}</h3>
+                    <p className="text-sm text-neutral-500 mt-1">
+                      {ingredient?.usedInProducts?.length || 0} product(s) use this ingredient
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setViewingUsageId(null)}
+                    className="p-2 hover:bg-neutral-100 rounded-lg transition-colors"
+                  >
+                    <svg className="w-6 h-6 text-neutral-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+                <div className="flex-1 overflow-auto p-6">
+                  {!ingredient?.usedInProducts || ingredient.usedInProducts.length === 0 ? (
+                    <div className="text-center py-12">
+                      <svg className="w-16 h-16 mx-auto text-neutral-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                      </svg>
+                      <p className="text-neutral-600 font-medium">No products use this ingredient</p>
+                      <p className="text-sm text-neutral-500 mt-1">This ingredient is not currently used in any menu items</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {ingredient.usedInProducts.map((product) => (
+                        <div 
+                          key={product.productId} 
+                          className={`p-4 rounded-lg border-2 transition-all ${
+                            product.isActive 
+                              ? 'bg-white border-neutral-200 hover:border-neutral-300' 
+                              : 'bg-neutral-50 border-neutral-200 opacity-60'
+                          }`}
+                        >
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2">
+                                <h4 className="font-semibold text-neutral-900">{product.productName}</h4>
+                                {!product.isActive && (
+                                  <span className="px-2 py-0.5 bg-neutral-200 text-neutral-600 text-xs rounded-full font-medium">
+                                    Inactive
+                                  </span>
+                                )}
+                              </div>
+                              <div className="mt-2 text-sm text-neutral-600">
+                                <span className="font-medium">Required per serving:</span>{' '}
+                                <span className="font-mono font-bold text-neutral-900">
+                                  {product.quantity} {ingredient.unit}
+                                </span>
+                              </div>
+                              <div className="mt-1 text-xs text-neutral-500">
+                                Can make: <span className="font-bold text-neutral-700">
+                                  {ingredient.currentStock > 0 
+                                    ? Math.floor(ingredient.currentStock / product.quantity)
+                                    : 0} servings
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                <div className="px-6 py-4 border-t border-neutral-200 bg-neutral-50">
+                  <button
+                    onClick={() => setViewingUsageId(null)}
+                    className="w-full px-6 py-2 bg-neutral-900 text-white rounded-lg hover:bg-neutral-800 font-medium"
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
+            </div>
+          );
+        })()}
 
         {/* Footer */}
         <div className="px-6 py-4 border-t border-neutral-200 bg-neutral-50 flex justify-between items-center">

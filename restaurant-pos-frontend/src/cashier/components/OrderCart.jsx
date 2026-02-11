@@ -19,7 +19,8 @@ export default function OrderCart({ order, onSendOrder, onCompleteOrder, onQuant
   const tax = orderLines.reduce((sum, line) => sum + (line.taxAmount || 0), 0);
   const total = order.total || (subtotal + tax);
 
-  const canSendToKitchen = pendingItems.length > 0 && order.status !== 'completed' && order.status !== 'paid';
+  // Allow sending to kitchen even if order is completed (incremental ordering), but not if paid
+  const canSendToKitchen = pendingItems.length > 0 && order.status !== 'paid';
   const canComplete = order.status === 'sent_to_kitchen' && pendingItems.length === 0;
 
   return (
@@ -192,9 +193,9 @@ export default function OrderCart({ order, onSendOrder, onCompleteOrder, onQuant
             )}
 
             {/* Status Messages */}
-            {order.status === 'completed' && (
+            {order.status === 'completed' && pendingItems.length === 0 && (
               <div className="text-xs text-center font-semibold text-green-900 bg-green-50 border border-green-200 rounded-lg py-2.5 px-3">
-                Order completed. Proceed to Payment tab.
+                Order completed. Go to Payment or add more items.
               </div>
             )}
             {order.status === 'paid' && (

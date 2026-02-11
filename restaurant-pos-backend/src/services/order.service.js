@@ -59,6 +59,23 @@ async function decrementStockForOrderLines(orderId, orderLines, tx = prisma) {
       consumptionMap[pi.ingredientId].total += consumedQty;
     }
   }
+
+  // Validate stock availability
+  const insufficientIngredients = [];
+  for (const [ingredientId, data] of Object.entries(consumptionMap)) {
+    const { total, ingredient } = data;
+    const currentStock = ingredient.stock?.quantity || 0;
+    
+    if (currentStock < total) {
+      insufficientIngredients.push(`${ingredient.name} (Required: ${total} ${ingredient.unit}, Available: ${currentStock} ${ingredient.unit})`);
+    }
+  }
+
+  if (insufficientIngredients.length > 0) {
+    const error = new Error(`Insufficient stock: ${insufficientIngredients.join(', ')}`);
+    error.statusCode = 400;
+    throw error;
+  }
   
   // Deduct from stock and create ledger entries
   for (const [ingredientId, data] of Object.entries(consumptionMap)) {
@@ -370,27 +387,60 @@ export const orderService = {
       throw error;
     }
 
-    // Mark unsent lines as sent
-    await prisma.orderLine.updateMany({
-      where: {
-        orderId,
-        sentToKitchen: false,
-      },
-      data: {
-        sentToKitchen: true,
-        kitchenStatus: 'PENDING',
-        sentToKitchenAt: new Date(),
-      },
-    });
-
-    // Decrement ingredient stock based on the items sent
-    try {
-      const ingredientsUpdated = await decrementStockForOrderLines(orderId, unsentLines);
+    // Transaction: Validate stock, mark sent, update order status
+    const updatedOrder = await prisma.$transaction(async (tx) => {
+      // 1. Decrement Stock (Validates first - throws if insufficient)
+      const ingredientsUpdated = await decrementStockForOrderLines(orderId, unsentLines, tx);
       console.log(`[Order ${orderId.slice(-8)}] Decremented stock for ${ingredientsUpdated} ingredients`);
-    } catch (stockError) {
-      console.error(`[Order ${orderId.slice(-8)}] Stock decrement error:`, stockError.message);
-      // Continue even if stock update fails - don't block the order
-    }
+
+      // 2. Mark unsent lines as sent
+      await tx.orderLine.updateMany({
+        where: {
+          orderId,
+          sentToKitchen: false,
+        },
+        data: {
+          sentToKitchen: true,
+          kitchenStatus: 'PENDING',
+          sentToKitchenAt: new Date(),
+        },
+      });
+
+      // 3. Update order status
+      if (order.status === ORDER_STATUS.DRAFT || order.status === ORDER_STATUS.COMPLETED) {
+        return await tx.order.update({
+          where: { id: orderId },
+          data: { status: ORDER_STATUS.SENT_TO_KITCHEN },
+          include: {
+            table: true,
+            orderLines: true,
+            user: {
+              select: {
+                id: true,
+                email: true,
+                role: true,
+              },
+            },
+          },
+        });
+      } else {
+        // Just reload the order
+        return await tx.order.findUnique({
+          where: { id: orderId },
+          include: {
+            table: true,
+            orderLines: true,
+            user: {
+              select: {
+                id: true,
+                email: true,
+                role: true,
+              },
+            },
+          },
+        });
+      }
+    });
 
     // Get updated order lines with product info for socket emission
     const updatedLines = await prisma.orderLine.findMany({
@@ -423,29 +473,6 @@ export const orderService = {
     }));
 
     emitNewKitchenItems(itemsToEmit);
-
-    // Update order status to sent_to_kitchen if it was draft
-    let updatedOrder;
-    if (order.status === ORDER_STATUS.DRAFT) {
-      updatedOrder = await prisma.order.update({
-        where: { id: orderId },
-        data: { status: ORDER_STATUS.SENT_TO_KITCHEN },
-        include: {
-          table: true,
-          orderLines: true,
-          user: {
-            select: {
-              id: true,
-              email: true,
-              role: true,
-            },
-          },
-        },
-      });
-    } else {
-      // Just reload the order with updated lines
-      updatedOrder = await this.getOrderById(orderId);
-    }
 
     // Create or update kitchen ticket with new items
     let ticket = await prisma.kitchenTicket.findUnique({
@@ -488,6 +515,18 @@ export const orderService = {
     if (unsentLines.length > 0) {
       const error = new Error(
         'Cannot complete order. There are unsent items. Send them to kitchen first.'
+      );
+      error.statusCode = 400;
+      throw error;
+    }
+
+    // Check if all sent items are ready
+    const notReadyItems = order.orderLines.filter(
+      line => line.sentToKitchen && line.kitchenStatus !== 'READY'
+    );
+    if (notReadyItems.length > 0) {
+      const error = new Error(
+        `Cannot complete order. ${notReadyItems.length} item(s) are still being prepared in the kitchen. Wait for kitchen to finish.`
       );
       error.statusCode = 400;
       throw error;
@@ -602,6 +641,41 @@ export const orderService = {
   async getOrdersBySession(sessionId) {
     const orders = await prisma.order.findMany({
       where: { sessionId },
+      include: {
+        table: {
+          include: {
+            floor: true,
+          },
+        },
+        orderLines: true,
+        payment: true,
+        kitchenTicket: true,
+        user: {
+          select: {
+            id: true,
+            email: true,
+            role: true,
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return orders;
+  },
+
+  /**
+   * Get all orders across sessions that need attention
+   * Returns: unpaid orders (for payment) + paid orders (for receipts)
+   * Excludes only draft orders
+   */
+  async getAllUnpaidOrders() {
+    const orders = await prisma.order.findMany({
+      where: {
+        status: {
+          in: [ORDER_STATUS.SENT_TO_KITCHEN, ORDER_STATUS.COMPLETED, ORDER_STATUS.PAID],
+        },
+      },
       include: {
         table: {
           include: {

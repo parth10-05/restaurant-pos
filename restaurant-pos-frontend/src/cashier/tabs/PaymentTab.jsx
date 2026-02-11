@@ -17,30 +17,32 @@ export default function PaymentTab({ hasSession }) {
       loadOrders();
       loadPosConfig();
       
-      // Auto-refresh orders every 5 seconds to show newly completed orders
+      // Auto-refresh only when no orders are present (empty list)
+      // Don't refresh if there are orders - it disrupts the user experience
       const interval = setInterval(() => {
-        loadOrders();
+        if (orders.length === 0) {
+          loadOrders();
+        }
       }, 5000);
       
       return () => clearInterval(interval);
     }
-  }, [hasSession]);
+  }, [hasSession, orders.length]);
 
   const loadOrders = async () => {
     setLoading(true);
     try {
-      // Clear cache to ensure fresh data (important for real-time order status updates)
-      const CACHE_PREFIX = 'API_CACHE_';
-      Object.keys(localStorage).forEach(key => {
-        if (key.startsWith(CACHE_PREFIX) && key.includes('/cashier/orders')) {
-          localStorage.removeItem(key);
-        }
-      });
-      
       const result = await orderService.getSessionOrders();
+      
       if (result.success && result.data.data) {
         // Filter only completed orders (ready for payment)
         const payableOrders = result.data.data.filter(
+          order => order.status === 'completed'
+        );
+        setOrders(payableOrders);
+      } else if (result.success && result.data) {
+        // Handle case where data is directly in result.data (not nested)
+        const payableOrders = result.data.filter(
           order => order.status === 'completed'
         );
         setOrders(payableOrders);

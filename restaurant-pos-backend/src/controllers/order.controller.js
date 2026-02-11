@@ -162,9 +162,9 @@ export const orderController = {
 
   async getSessionOrders(req, res, next) {
     try {
-      const sessionId = req.session.id;
-
-      const orders = await orderService.getOrdersBySession(sessionId);
+      // For payment tab: Get ALL unpaid orders (not just current session)
+      // This allows cashiers to process payments for orders from previous sessions
+      const orders = await orderService.getAllUnpaidOrders();
 
       res.status(200).json({
         success: true,
