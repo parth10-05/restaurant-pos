@@ -51,7 +51,7 @@ api.get = async (url, config = {}) => {
 
   try {
     cachedItem = localStorage.getItem(cacheKey);
-  } catch (error) {
+  } catch {
     // LocalStorage might be unavailable
   }
 
@@ -72,7 +72,7 @@ api.get = async (url, config = {}) => {
       } else {
         localStorage.removeItem(cacheKey); // Expired
       }
-    } catch (e) {
+    } catch {
       localStorage.removeItem(cacheKey); // Corrupted
     }
   }
@@ -87,7 +87,7 @@ api.get = async (url, config = {}) => {
         data: response.data,
         timestamp: Date.now()
       }));
-    } catch (err) {
+    } catch {
       console.warn('LocalStorage quota exceeded, clearing old cache');
       // Clear all API cache to make space
       Object.keys(localStorage).forEach(key => {
