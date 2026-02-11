@@ -83,34 +83,23 @@ api.get = async (url, config = {}) => {
   // Only cache successful OK responses
   if (response.status === 200) {
     try {
-      localStorage.setItem(cacheKey, JSON.stringify({
+      const dataToStore = JSON.stringify({
         data: response.data,
         timestamp: Date.now()
-      }));
-    } catch {
-      console.warn('LocalStorage quota exceeded, clearing old cache');
-      // Clear all API cache to make space
-      Object.keys(localStorage).forEach(key => {
-        if (key.startsWith(CACHE_PREFIX)) {
-          localStorage.removeItem(key);
-        }
       });
+      
+      // Limit cache size: Don't cache if larger than 500KB to prevent UI freeze
+      if (dataToStore.length < 500000) {
+        localStorage.setItem(cacheKey, dataToStore);
+      }
+    } catch {
+      // Silently fail on storage errors or quota exceeded to prevent disruption
+      // We don't want to clear the whole cache as it might cause thrashing
+      console.warn('Failed to cache request');
     }
   }
   return response;
 };
 
-// Clear cache on mutation (POST, PUT, DELETE, PATCH) to ensure data consistency
-api.interceptors.response.use(
-  (response) => {
-    const method = response.config.method?.toLowerCase();
-    if (['post', 'put', 'delete', 'patch'].includes(method)) {
-      Object.keys(localStorage).forEach(key => {
-        if (key.startsWith(CACHE_PREFIX)) {
-          localStorage.removeItem(key);
-        }
-      });
-    }
-    return response;
-  }
-);
+// Removed the aggressive cache clearing on mutation to improve performance.
+// Relying on TTL (60s) is better than wiping storage on every POST/PUT.
