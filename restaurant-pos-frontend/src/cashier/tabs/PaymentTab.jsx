@@ -16,12 +16,27 @@ export default function PaymentTab({ hasSession }) {
     if (hasSession) {
       loadOrders();
       loadPosConfig();
+      
+      // Auto-refresh orders every 5 seconds to show newly completed orders
+      const interval = setInterval(() => {
+        loadOrders();
+      }, 5000);
+      
+      return () => clearInterval(interval);
     }
   }, [hasSession]);
 
   const loadOrders = async () => {
     setLoading(true);
     try {
+      // Clear cache to ensure fresh data (important for real-time order status updates)
+      const CACHE_PREFIX = 'API_CACHE_';
+      Object.keys(localStorage).forEach(key => {
+        if (key.startsWith(CACHE_PREFIX) && key.includes('/cashier/orders')) {
+          localStorage.removeItem(key);
+        }
+      });
+      
       const result = await orderService.getSessionOrders();
       if (result.success && result.data.data) {
         // Filter only completed orders (ready for payment)
