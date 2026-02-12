@@ -102,7 +102,8 @@ export default function PaymentTab({ hasSession }) {
         setError(result.error || 'Payment failed');
       }
     } catch (err) {
-      setError('Payment processing failed. Please try again.');
+      console.error('Payment error:', err);
+      setError(err.response?.data?.error || err.message || 'Payment processing failed. Please try again.');
     } finally {
       setProcessingPayment(false);
     }
