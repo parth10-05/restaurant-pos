@@ -21,12 +21,12 @@ const prisma = new PrismaClient();
 // ============================================
 const usersData = [
   {
-    email: 'admin@adani.com',
+    email: 'admin@restaurant.com',
     password: 'admin123', // Will be hashed
     role: 'admin',
   },
   {
-    email: 'cashier@adani.com',
+    email: 'cashier@restaurant.com',
     password: 'cashier123', // Will be hashed
     role: 'cashier',
   },
@@ -36,14 +36,14 @@ const usersData = [
 // POS CONFIG
 // ============================================
 const posConfigData = {
-  posName: 'Adani Restaurant POS',
+  posName: 'Restaurant POS',
   defaultTax: 5.0,
   enableKitchenDisplay: true,
   enableCustomerDisplay: false,
   enableCash: true,
   enableDigital: true,
   enableUpi: true,
-  upiId: 'adani@paytm',
+  upiId: 'restaurant@paytm',
 };
 
 // ============================================

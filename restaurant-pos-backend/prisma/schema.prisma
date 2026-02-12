@@ -168,7 +168,7 @@ model KitchenTicket {
 
 model PosConfig {
   id                    String   @id @default(uuid())
-  posName               String   @default("Adani POS")
+  posName               String   @default("Restaurant POS")
   defaultTax            Float    @default(5.0)
   enableKitchenDisplay  Boolean  @default(true)
   enableCustomerDisplay Boolean  @default(false)
@@ -182,7 +182,7 @@ model PosConfig {
 
 model ReceiptSettings {
   id                String   @id @default(uuid())
-  restaurantName    String   @default("Adani Restaurant")
+  restaurantName    String   @default("Sample Restaurant")
   address           String   @default("")
   phone             String?
   gstNumber         String?

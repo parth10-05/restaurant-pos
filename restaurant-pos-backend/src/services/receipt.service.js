@@ -30,7 +30,7 @@ export const generateReceipt = async (orderId) => {
     // Create default settings if none exist
     settings = await prisma.receiptSettings.create({
       data: {
-        restaurantName: 'Adani Restaurant',
+        restaurantName: 'Sample Restaurant',
         address: '',
         showOrderNumber: true,
         showCashier: true,

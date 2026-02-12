@@ -24,7 +24,7 @@ export const posConfigService = {
     if (!config) {
       config = await prisma.posConfig.create({
         data: {
-          posName: 'Adani POS',
+          posName: 'Restaurant POS',
           defaultTax: 5.0,
           enableKitchenDisplay: true,
           enableCustomerDisplay: false,

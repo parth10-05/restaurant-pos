@@ -8,7 +8,7 @@ export default function AuthLayout({ children }) {
         <div className="container mx-auto px-4">
           <div className="h-16 flex items-center">
             <h1 className="text-xl font-semibold text-neutral-900 tracking-tight">
-              Adani POS
+              Restaurant POS System
             </h1>
           </div>
         </div>
@@ -25,7 +25,7 @@ export default function AuthLayout({ children }) {
       <footer className="border-t border-neutral-200 bg-white">
         <div className="container mx-auto px-4">
           <div className="h-14 flex items-center justify-center text-sm text-neutral-500">
-            © 2026 Adani POS. All rights reserved.
+            © 2026 Restaurant POS System. All rights reserved.
           </div>
         </div>
       </footer>

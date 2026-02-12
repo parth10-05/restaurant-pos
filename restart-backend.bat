@@ -10,7 +10,7 @@ timeout /t 2 /nobreak >nul
 
 echo.
 echo [2/3] Regenerating Prisma Client with new schema...
-cd /d "c:\My_Works\projects\adani pos\restaurant-pos-backend"
+cd /d "%~dp0restaurant-pos-backend"
 call npx prisma generate
 
 echo.

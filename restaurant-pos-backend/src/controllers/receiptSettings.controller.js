@@ -9,7 +9,7 @@ export const getReceiptSettings = async (req, res) => {
     if (!settings) {
       settings = await prisma.receiptSettings.create({
         data: {
-          restaurantName: 'Adani Restaurant',
+          restaurantName: 'Sample Restaurant',
           address: '',
           phone: null,
           gstNumber: null,
@@ -73,7 +73,7 @@ export const updateReceiptSettings = async (req, res) => {
       // Create new settings
       settings = await prisma.receiptSettings.create({
         data: {
-          restaurantName: restaurantName || 'Adani Restaurant',
+          restaurantName: restaurantName || 'Sample Restaurant',
           address: address || '',
           phone,
           gstNumber,

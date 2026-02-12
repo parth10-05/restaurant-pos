@@ -1,7 +1,7 @@
 {
-  "name": "adani-chodoo",
+  "name": "restaurant-pos-backend",
   "version": "1.0.0",
-  "description": "Adani Chodoo - Restaurant POS System Backend",
+  "description": "Restaurant POS System Backend",
   "main": "src/server.js",
   "type": "module",
   "scripts": {
@@ -19,8 +19,7 @@
     "pos",
     "restaurant",
     "express",
-    "prisma",
-    "adani-chodoo"
+    "prisma"
   ],
   "author": "",
   "license": "ISC",

@@ -64,7 +64,7 @@ async function seedTransactions() {
       console.log('⚠️  No admin user found. Creating one...');
       adminUser = await prisma.user.create({
         data: {
-          email: 'admin@adani.com',
+          email: 'admin@restaurant.com',
           password: '$2b$10$xyz...', // Hashed password
           role: 'admin',
         },

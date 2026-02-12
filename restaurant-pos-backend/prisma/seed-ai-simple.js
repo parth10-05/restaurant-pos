@@ -61,10 +61,10 @@ async function main() {
   // CONFIG
   // ═══════════════════════════════════════════════════════════════════════════
   await prisma.posConfig.create({
-    data: { posName: 'Adani Restaurant', defaultTax: 5.0, enableKitchenDisplay: true }
+    data: { posName: 'Restaurant POS', defaultTax: 5.0, enableKitchenDisplay: true }
   });
   await prisma.receiptSettings.create({
-    data: { restaurantName: 'Adani Restaurant', address: '123 Food St' }
+    data: { restaurantName: 'Sample Restaurant', address: '123 Food St' }
   });
 
   // ═══════════════════════════════════════════════════════════════════════════

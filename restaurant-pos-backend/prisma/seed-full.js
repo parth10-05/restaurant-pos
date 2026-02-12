@@ -613,7 +613,7 @@ async function seedPosConfig() {
   
   await prisma.posConfig.create({
     data: {
-      posName: 'Adani Restaurant POS',
+      posName: 'Restaurant POS',
       defaultTax: 5.0,
       enableKitchenDisplay: true,
       enableCash: true,
@@ -625,7 +625,7 @@ async function seedPosConfig() {
   
   await prisma.receiptSettings.create({
     data: {
-      restaurantName: 'Adani Restaurant',
+      restaurantName: 'Sample Restaurant',
       address: '123 Main Street, Mumbai',
       phone: '+91 9876543210',
       gstNumber: '27AABCU9603R1ZM',
