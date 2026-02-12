@@ -12,8 +12,7 @@
     "db:push": "prisma db push",
     "db:migrate": "prisma migrate dev",
     "db:studio": "prisma studio",
-    "db:seed": "node prisma/seed.js",
-    "db:seed-ai": "node prisma/seed-ai.js"
+    "db:seed": "node prisma/seed.js"
   },
   "keywords": [
     "pos",
