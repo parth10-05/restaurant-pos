@@ -6,6 +6,9 @@
 const AI_SERVICE_URL = process.env.AI_SERVICE_URL || 'http://localhost:8000';
 const AI_SERVICE_TIMEOUT = parseInt(process.env.AI_SERVICE_TIMEOUT || '30000');
 
+// ADD THIS LINE TO DEBUG
+console.log('[AI Service Config] Using AI URL:', AI_SERVICE_URL); 
+
 /**
  * Map database reason values (uppercase) to Python AI expected values (lowercase)
  */
